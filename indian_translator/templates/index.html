@@ -181,18 +181,14 @@
     <div class="container">
         <div class="header">
             <h1>Multi Language Translator</h1>
-            <p>English और Indian languages का अनुवाद करें | Text-to-Speech सुविधा</p>
+            <p>“Translation of English and Indian Languages | Text-to-Speech Support”</p>
         </div>
         
         <div class="translator-box">
             <!-- Input Section -->
             <div class="input-section">
-                <h3>📝 टेक्स्ट डालें (Enter Text)</h3>
-                <textarea id="inputText" placeholder="यहाँ टेक्स्ट लिखें... 
-उदाहरण:
-नमस्ते, आप कैसे हैं?
-வணக்கம், நீங்கள் எப்படி இருக்கிறீர்கள்?
-Hello, how are you?"></textarea>
+                <h3>Enter Text</h3>
+                <textarea id="inputText" placeholder="Hello, how are you?"></textarea>
                 
                 <div class="controls">
                     <select id="targetLang">
@@ -208,7 +204,7 @@ Hello, how are you?"></textarea>
                     </select>
                     
                     <button class="translate-btn" onclick="translateText()">
-                        🔄 अनुवाद करें
+                        🔄 Translate
                     </button>
                 </div>
                 
@@ -223,17 +219,17 @@ Hello, how are you?"></textarea>
             
             <!-- Output Section -->
             <div class="output-section">
-                <h3>📄 अनुवाद परिणाम (Translation Result)</h3>
+                <h3>Translation Result</h3>
                 <div class="output" id="outputText">
-                    अनुवाद यहाँ दिखेगा...
+                    Translation will appear here...
                 </div>
                 
                 <div style="margin-top: 20px;">
                     <button class="speak-btn" onclick="speakText()" id="speakBtn" disabled>
-                        🔊 सुनें (Listen)
+                        🔊 Listen
                     </button>
                     <button onclick="copyText()" style="background: #6b7280; color: white;">
-                        📋 कॉपी करें
+                        📋 Copy
                     </button>
                 </div>
                 
@@ -264,14 +260,14 @@ Hello, how are you?"></textarea>
             const targetLang = document.getElementById('targetLang').value;
             
             if (!text) {
-                showAlert('कृपया टेक्स्ट डालें', 'error');
+                showAlert('Please enter text to translate', 'error');
                 return;
             }
             
             try {
                 // Show loading
                 const translateBtn = document.querySelector('.translate-btn');
-                translateBtn.innerHTML = '⏳ अनुवाद हो रहा है...';
+                translateBtn.innerHTML = '⏳ Translating...';
                 translateBtn.disabled = true;
                 
                 // Call backend
@@ -292,9 +288,9 @@ Hello, how are you?"></textarea>
                     currentTranslation = data.translated_text;
                     document.getElementById('outputText').innerHTML = currentTranslation;
                     document.getElementById('speakBtn').disabled = false;
-                    showAlert('✅ अनुवाद सफल!', 'success');
+                    showAlert('✅ Translation successful!', 'success');
                 } else {
-                    showAlert('❌ त्रुटि: ' + data.error, 'error');
+                    showAlert('❌ Error: ' + data.error, 'error');
                 }
                 
             } catch (error) {
@@ -302,7 +298,7 @@ Hello, how are you?"></textarea>
             } finally {
                 // Reset button
                 const translateBtn = document.querySelector('.translate-btn');
-                translateBtn.innerHTML = '🔄 अनुवाद करें';
+                translateBtn.innerHTML = '🔄 Translate';
                 translateBtn.disabled = false;
             }
         }
@@ -310,14 +306,14 @@ Hello, how are you?"></textarea>
         // Generate speech
         async function speakText() {
             if (!currentTranslation) {
-                showAlert('पहले अनुवाद करें', 'error');
+                showAlert('Please translate text first', 'error');
                 return;
             }
             
             try {
                 // Show loading
                 const speakBtn = document.getElementById('speakBtn');
-                speakBtn.innerHTML = '⏳ ऑडियो बन रहा है...';
+                speakBtn.innerHTML = '⏳ Generating audio...';
                 speakBtn.disabled = true;
                 
                 // Get target language
@@ -346,9 +342,9 @@ Hello, how are you?"></textarea>
                     audioPlayer.style.display = 'block';
                     audioElement.play();
                     
-                    showAlert('🔊 ऑडियो तैयार है', 'success');
+                    showAlert('🔊 Audio is ready', 'success');
                 } else {
-                    showAlert('❌ ऑडियो बनाने में त्रुटि', 'error');
+                    showAlert('❌ Error generating audio', 'error');
                 }
                 
             } catch (error) {
@@ -356,7 +352,7 @@ Hello, how are you?"></textarea>
             } finally {
                 // Reset button
                 const speakBtn = document.getElementById('speakBtn');
-                speakBtn.innerHTML = '🔊 सुनें (Listen)';
+                speakBtn.innerHTML = '🔊 Listen';
                 speakBtn.disabled = false;
             }
         }
@@ -364,16 +360,16 @@ Hello, how are you?"></textarea>
         // Copy text
         function copyText() {
             if (!currentTranslation) {
-                showAlert('कॉपी करने के लिए कुछ नहीं है', 'error');
+                showAlert('Please copy some text first', 'error');
                 return;
             }
             
             navigator.clipboard.writeText(currentTranslation)
                 .then(() => {
-                    showAlert('✅ टेक्स्ट कॉपी हो गया', 'success');
+                    showAlert('✅ Text copied successfully', 'success');
                 })
                 .catch(() => {
-                    showAlert('❌ कॉपी नहीं हो पाया', 'error');
+                    showAlert('❌ Failed to copy text', 'error');
                 });
         }
         
@@ -407,7 +403,7 @@ Hello, how are you?"></textarea>
         // Test backend on load
         window.onload = () => {
             console.log('App loaded');
-            showAlert('👋 स्वागत है! अनुवाद शुरू करें', 'success');
+            showAlert('👋 Welcome! Start translating', 'success');
         };
     </script>
 </body>
