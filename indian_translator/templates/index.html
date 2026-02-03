@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>भारतीय अनुवादक</title>
+    <title>Multilingual Translator</title>
     <style>
         * {
             margin: 0;
@@ -180,8 +180,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Multi Language Translator</h1>
-            <p>“Translation of English and Indian Languages | Text-to-Speech Support”</p>
+            <h1>Multi-language Translator</h1>
+            <p>A Multilingual Translation System Integrating Text-to-Speech</p>
         </div>
         
         <div class="translator-box">
@@ -219,7 +219,7 @@
             
             <!-- Output Section -->
             <div class="output-section">
-                <h3>Translation Result</h3>
+                <h3>📄Translation Result</h3>
                 <div class="output" id="outputText">
                     Translation will appear here...
                 </div>
@@ -260,7 +260,7 @@
             const targetLang = document.getElementById('targetLang').value;
             
             if (!text) {
-                showAlert('Please enter text to translate', 'error');
+                showAlert('कृपया टेक्स्ट डालें', 'error');
                 return;
             }
             
@@ -306,7 +306,7 @@
         // Generate speech
         async function speakText() {
             if (!currentTranslation) {
-                showAlert('Please translate text first', 'error');
+                showAlert('No translation to speak', 'error');
                 return;
             }
             
@@ -342,7 +342,7 @@
                     audioPlayer.style.display = 'block';
                     audioElement.play();
                     
-                    showAlert('🔊 Audio is ready', 'success');
+                    showAlert('🔊 Audio ready!', 'success');
                 } else {
                     showAlert('❌ Error generating audio', 'error');
                 }
@@ -360,13 +360,13 @@
         // Copy text
         function copyText() {
             if (!currentTranslation) {
-                showAlert('Please copy some text first', 'error');
+                showAlert('No text to copy', 'error');
                 return;
             }
             
             navigator.clipboard.writeText(currentTranslation)
                 .then(() => {
-                    showAlert('✅ Text copied successfully', 'success');
+                    showAlert('✅ Text copied to clipboard', 'success');
                 })
                 .catch(() => {
                     showAlert('❌ Failed to copy text', 'error');
