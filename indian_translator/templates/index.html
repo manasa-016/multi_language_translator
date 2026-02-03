@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>भारतीय अनुवादक</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .translator-box {
+            padding: 30px;
+            display: grid;
+            gap: 20px;
+        }
+        
+        .input-section, .output-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 150px;
+            font-family: inherit;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        select {
+            padding: 12px 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            flex: 1;
+        }
+        
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .translate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .translate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .speak-btn {
+            background: #10b981;
+            color: white;
+        }
+        
+        .output {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            min-height: 150px;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        
+        .audio-player {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .languages {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .lang-btn {
+            padding: 10px 20px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .lang-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+        }
+        
+        .alert-success {
+            background: #10b981;
+        }
+        
+        .alert-error {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Multi Language Translator</h1>
+            <p>English और Indian languages का अनुवाद करें | Text-to-Speech सुविधा</p>
+        </div>
+        
+        <div class="translator-box">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h3>📝 टेक्स्ट डालें (Enter Text)</h3>
+                <textarea id="inputText" placeholder="यहाँ टेक्स्ट लिखें... 
+उदाहरण:
+नमस्ते, आप कैसे हैं?
+வணக்கம், நீங்கள் எப்படி இருக்கிறீர்கள்?
+Hello, how are you?"></textarea>
+                
+                <div class="controls">
+                    <select id="targetLang">
+                        <option value="hi">हिन्दी (Hindi)</option>
+                        <option value="bn">বাংলা (Bengali)</option>
+                        <option value="ta">தமிழ் (Tamil)</option>
+                        <option value="te">తెలుగు (Telugu)</option>
+                        <option value="mr">मराठी (Marathi)</option>
+                        <option value="gu">ગુજરાતી (Gujarati)</option>
+                        <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                        <option value="ml">മലയാളം (Malayalam)</option>
+                        <option value="en">English</option>
+                    </select>
+                    
+                    <button class="translate-btn" onclick="translateText()">
+                        🔄 अनुवाद करें
+                    </button>
+                </div>
+                
+                <div class="languages">
+                    <button class="lang-btn" onclick="setLanguage('hi')">हिन्दी</button>
+                    <button class="lang-btn" onclick="setLanguage('ta')">தமிழ்</button>
+                    <button class="lang-btn" onclick="setLanguage('te')">తెలుగు</button>
+                    <button class="lang-btn" onclick="setLanguage('en')">English</button>
+                    <button class="lang-btn" onclick="setLanguage('bn')">বাংলা</button>
+                </div>
+            </div>
+            
+            <!-- Output Section -->
+            <div class="output-section">
+                <h3>📄 अनुवाद परिणाम (Translation Result)</h3>
+                <div class="output" id="outputText">
+                    अनुवाद यहाँ दिखेगा...
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button class="speak-btn" onclick="speakText()" id="speakBtn" disabled>
+                        🔊 सुनें (Listen)
+                    </button>
+                    <button onclick="copyText()" style="background: #6b7280; color: white;">
+                        📋 कॉपी करें
+                    </button>
+                </div>
+                
+                <div class="audio-player" id="audioPlayer">
+                    <audio controls id="audioElement"></audio>
+                </div>
+            </div>
+        </div>
+        
+        <div style="padding: 20px; text-align: center; color: #6b7280;">
+            <p>✅ 100% Working | Made with Python Flask</p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentTranslation = '';
+        
+        // Set target language
+        function setLanguage(lang) {
+            document.getElementById('targetLang').value = lang;
+            showAlert('Language set: ' + lang, 'success');
+        }
+        
+        // Translate text
+        async function translateText() {
+            const text = document.getElementById('inputText').value.trim();
+            const targetLang = document.getElementById('targetLang').value;
+            
+            if (!text) {
+                showAlert('कृपया टेक्स्ट डालें', 'error');
+                return;
+            }
+            
+            try {
+                // Show loading
+                const translateBtn = document.querySelector('.translate-btn');
+                translateBtn.innerHTML = '⏳ अनुवाद हो रहा है...';
+                translateBtn.disabled = true;
+                
+                // Call backend
+                const response = await fetch('/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        target_lang: targetLang
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentTranslation = data.translated_text;
+                    document.getElementById('outputText').innerHTML = currentTranslation;
+                    document.getElementById('speakBtn').disabled = false;
+                    showAlert('✅ अनुवाद सफल!', 'success');
+                } else {
+                    showAlert('❌ त्रुटि: ' + data.error, 'error');
+                }
+                
+            } catch (error) {
+                showAlert('❌ Server error: ' + error, 'error');
+            } finally {
+                // Reset button
+                const translateBtn = document.querySelector('.translate-btn');
+                translateBtn.innerHTML = '🔄 अनुवाद करें';
+                translateBtn.disabled = false;
+            }
+        }
+        
+        // Generate speech
+        async function speakText() {
+            if (!currentTranslation) {
+                showAlert('पहले अनुवाद करें', 'error');
+                return;
+            }
+            
+            try {
+                // Show loading
+                const speakBtn = document.getElementById('speakBtn');
+                speakBtn.innerHTML = '⏳ ऑडियो बन रहा है...';
+                speakBtn.disabled = true;
+                
+                // Get target language
+                const targetLang = document.getElementById('targetLang').value;
+                
+                // Call TTS endpoint
+                const response = await fetch('/tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: currentTranslation,
+                        lang: targetLang === 'en' ? 'en' : 'hi'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Play audio
+                    const audioPlayer = document.getElementById('audioPlayer');
+                    const audioElement = document.getElementById('audioElement');
+                    
+                    audioElement.src = data.audio_url;
+                    audioPlayer.style.display = 'block';
+                    audioElement.play();
+                    
+                    showAlert('🔊 ऑडियो तैयार है', 'success');
+                } else {
+                    showAlert('❌ ऑडियो बनाने में त्रुटि', 'error');
+                }
+                
+            } catch (error) {
+                showAlert('❌ TTS error: ' + error, 'error');
+            } finally {
+                // Reset button
+                const speakBtn = document.getElementById('speakBtn');
+                speakBtn.innerHTML = '🔊 सुनें (Listen)';
+                speakBtn.disabled = false;
+            }
+        }
+        
+        // Copy text
+        function copyText() {
+            if (!currentTranslation) {
+                showAlert('कॉपी करने के लिए कुछ नहीं है', 'error');
+                return;
+            }
+            
+            navigator.clipboard.writeText(currentTranslation)
+                .then(() => {
+                    showAlert('✅ टेक्स्ट कॉपी हो गया', 'success');
+                })
+                .catch(() => {
+                    showAlert('❌ कॉपी नहीं हो पाया', 'error');
+                });
+        }
+        
+        // Show alert
+        function showAlert(message, type) {
+            // Remove existing alerts
+            const existing = document.querySelector('.alert');
+            if (existing) existing.remove();
+            
+            // Create alert
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            document.body.appendChild(alert);
+            
+            // Auto remove
+            setTimeout(() => {
+                if (alert.parentElement) {
+                    alert.remove();
+                }
+            }, 3000);
+        }
+        
+        // Auto-translate on Ctrl+Enter
+        document.getElementById('inputText').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                translateText();
+            }
+        });
+        
+        // Test backend on load
+        window.onload = () => {
+            console.log('App loaded');
+            showAlert('👋 स्वागत है! अनुवाद शुरू करें', 'success');
+        };
+    </script>
+</body>
+</html>
