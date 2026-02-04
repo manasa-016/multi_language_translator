@@ -1,36 +1,72 @@
-#!/usr/bin/env python3
 """
-Indian Language Translator for Render Deployment
-Make sure this file is in the ROOT directory
+Indian Language Translator - Compatible with Python 3.9-3.11
+For Render deployment
 """
 
 import os
 import sys
+import tempfile
+import logging
 
-# Add current directory to Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Check Python version
+python_version = sys.version_info
+print(f"🐍 Python version: {python_version.major}.{python_version.minor}.{python_version.micro}")
+
+# Ensure we're using compatible Python version
+if python_version.major == 3 and python_version.minor >= 14:
+    print("⚠️  WARNING: Python 3.14+ may have compatibility issues")
+    print("💡 Recommended: Use Python 3.9-3.11 on Render")
 
 try:
     from flask import Flask, render_template, request, jsonify, send_file
     from deep_translator import GoogleTranslator
     from gtts import gTTS
-    import tempfile
-    import logging
     print("✅ All imports successful")
 except ImportError as e:
     print(f"❌ Import Error: {e}")
-    print("Please install dependencies: pip install Flask deep-translator gtts langdetect")
+    print("📦 Installing dependencies...")
+    print("Run: pip install Flask deep-translator gtts")
     sys.exit(1)
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-# Get PORT from environment or use default
+# Get PORT from environment (Render provides this)
 PORT = int(os.environ.get('PORT', 5000))
 
-app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'render-translator-secret-2024')
+# Initialize Flask app with explicit paths
+try:
+    # Get the directory of this file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    template_dir = os.path.join(current_dir, 'templates')
+    static_dir = os.path.join(current_dir, 'static')
+    
+    print(f"📁 Current directory: {current_dir}")
+    print(f"📄 Template directory: {template_dir}")
+    print(f"🎨 Static directory: {static_dir}")
+    
+    # Create Flask app with explicit template folder
+    app = Flask(
+        __name__,
+        template_folder=template_dir,
+        static_folder=static_dir
+    )
+    
+    app.secret_key = os.environ.get('SECRET_KEY', 'indian-translator-secret-key-2024')
+    
+    print("✅ Flask app initialized successfully")
+    
+except Exception as e:
+    print(f"❌ Flask initialization error: {e}")
+    print("💡 Trying alternative initialization...")
+    
+    # Fallback initialization
+    app = Flask(__name__)
+    app.secret_key = os.environ.get('SECRET_KEY', 'fallback-secret-key')
 
 # Indian Languages with TTS support
 INDIAN_LANGUAGES = {
@@ -51,30 +87,214 @@ INDIAN_LANGUAGES = {
 
 @app.route('/')
 def home():
-    """Home page with translation interface"""
-    print("📄 Serving home page")
-    try:
-        return render_template('index.html', languages=INDIAN_LANGUAGES)
-    except Exception as e:
-        print(f"❌ Template error: {e}")
-        return """
-        <html>
-        <head><title>Indian Translator</title></head>
-        <body>
-            <h1>Indian Language Translator</h1>
-            <p>Template not found. Please ensure templates/index.html exists.</p>
-        </body>
-        </html>
-        """
+    """Home page - Simple HTML if template fails"""
+    print("🌐 Serving home page")
+    
+    # Check if template exists
+    template_path = os.path.join(app.template_folder, 'index.html')
+    if os.path.exists(template_path):
+        try:
+            return render_template('index.html', languages=INDIAN_LANGUAGES)
+        except Exception as e:
+            print(f"❌ Template render error: {e}")
+    
+    # Fallback HTML
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Indian Language Translator</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+            }
+            .container {
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            }
+            h1 {
+                color: #333;
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            textarea, select, button {
+                width: 100%;
+                padding: 15px;
+                margin: 10px 0;
+                border: 2px solid #ddd;
+                border-radius: 8px;
+                font-size: 16px;
+            }
+            textarea {
+                min-height: 120px;
+                resize: vertical;
+            }
+            button {
+                background: #667eea;
+                color: white;
+                border: none;
+                cursor: pointer;
+                font-weight: bold;
+                transition: 0.3s;
+            }
+            button:hover {
+                background: #5a67d8;
+                transform: translateY(-2px);
+            }
+            .output {
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+                min-height: 100px;
+                border: 2px dashed #ddd;
+            }
+            audio {
+                width: 100%;
+                margin-top: 20px;
+            }
+            .status {
+                background: #10b981;
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+                text-align: center;
+                margin-bottom: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="status">
+                ✅ Indian Language Translator is Running
+            </div>
+            
+            <h1>🌐 Indian Language Translator</h1>
+            
+            <textarea id="inputText" placeholder="Enter text to translate...">Hello, how are you today?</textarea>
+            
+            <select id="targetLang">
+                <option value="hi">Hindi (हिन्दी)</option>
+                <option value="bn">Bengali (বাংলা)</option>
+                <option value="ta">Tamil (தமிழ்)</option>
+                <option value="te">Telugu (తెలుగు)</option>
+                <option value="mr">Marathi (मराठी)</option>
+                <option value="en">English</option>
+            </select>
+            
+            <button onclick="translateText()">Translate</button>
+            <button onclick="speakText()" id="speakBtn" disabled>Speak Translation</button>
+            
+            <div class="output" id="outputText">
+                Translation will appear here...
+            </div>
+            
+            <audio id="audioPlayer" controls></audio>
+            
+            <div style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
+                <p>Powered by Flask, deep-translator & gTTS</p>
+                <p>Port: """ + str(PORT) + """ | Python: """ + f"{python_version.major}.{python_version.minor}" + """</p>
+            </div>
+        </div>
+        
+        <script>
+            let currentTranslation = '';
+            
+            async function translateText() {
+                const text = document.getElementById('inputText').value;
+                const lang = document.getElementById('targetLang').value;
+                
+                if (!text.trim()) {
+                    alert('Please enter text to translate');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/translate', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({text: text, target_lang: lang})
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        currentTranslation = data.translated_text;
+                        document.getElementById('outputText').innerHTML = `
+                            <strong>Translation:</strong><br>
+                            ${currentTranslation}<br><br>
+                            <small>To ${data.target_lang}</small>
+                        `;
+                        document.getElementById('speakBtn').disabled = false;
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    alert('Error: ' + error);
+                }
+            }
+            
+            async function speakText() {
+                if (!currentTranslation) {
+                    alert('Please translate text first');
+                    return;
+                }
+                
+                try {
+                    const lang = document.getElementById('targetLang').value;
+                    
+                    const response = await fetch('/tts', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({text: currentTranslation, lang: lang})
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        const audio = document.getElementById('audioPlayer');
+                        audio.src = data.audio_url;
+                        audio.play();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    alert('Error: ' + error);
+                }
+            }
+            
+            // Auto-translate on Ctrl+Enter
+            document.getElementById('inputText').addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    translateText();
+                }
+            });
+        </script>
+    </body>
+    </html>
+    """
+    
+    return html_content
 
 @app.route('/health')
-def health():
+def health_check():
     """Health check endpoint for Render"""
     return jsonify({
         'status': 'healthy',
         'service': 'Indian Language Translator',
+        'version': '2.0.0',
         'port': PORT,
-        'languages': len(INDIAN_LANGUAGES)
+        'python_version': f"{python_version.major}.{python_version.minor}.{python_version.micro}",
+        'languages_supported': len(INDIAN_LANGUAGES)
     })
 
 @app.route('/translate', methods=['POST'])
@@ -82,24 +302,22 @@ def translate():
     """Translate text between languages"""
     try:
         print("🔄 Translation request received")
-        data = request.get_json()
         
+        data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
-            
+        
         text = data.get('text', '').strip()
         target_lang = data.get('target_lang', 'hi')
         
         if not text:
             return jsonify({'error': 'Please enter text'}), 400
         
-        print(f"📝 Translating: '{text[:50]}...' to {target_lang}")
+        print(f"📝 Translating {len(text)} characters to {target_lang}")
         
-        # Translate using Google Translator
+        # Translate
         translator = GoogleTranslator(source='auto', target=target_lang)
         translated = translator.translate(text)
-        
-        print(f"✅ Translation successful")
         
         return jsonify({
             'success': True,
@@ -117,41 +335,36 @@ def text_to_speech():
     """Convert text to speech"""
     try:
         print("🔊 TTS request received")
-        data = request.get_json()
         
+        data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
-            
+        
         text = data.get('text', '').strip()
         lang = data.get('lang', 'en')
         
         if not text:
             return jsonify({'error': 'No text provided'}), 400
         
-        # Limit text length for performance
+        # Limit text length
         text = text[:500]
         
-        print(f"🎵 Generating speech for {lang}, text length: {len(text)}")
+        print(f"🎵 Generating speech for {lang}")
         
-        # Get TTS language code
+        # Get TTS language
         lang_info = INDIAN_LANGUAGES.get(lang, INDIAN_LANGUAGES['en'])
         tts_lang = lang_info['tts_lang']
         
-        # Create temporary file
+        # Create temp file
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
-        temp_path = temp_file.name
         
         # Generate speech
         tts = gTTS(text=text, lang=tts_lang, slow=False)
-        tts.save(temp_path)
-        
-        print(f"✅ Speech generated: {temp_path}")
-        
-        filename = os.path.basename(temp_path)
+        tts.save(temp_file.name)
         
         return jsonify({
             'success': True,
-            'audio_url': f'/audio/{filename}',
+            'audio_url': f'/audio/{os.path.basename(temp_file.name)}',
             'message': 'Speech generated successfully'
         })
         
@@ -163,7 +376,6 @@ def text_to_speech():
 def serve_audio(filename):
     """Serve generated audio files"""
     try:
-        print(f"🎧 Serving audio file: {filename}")
         temp_dir = tempfile.gettempdir()
         file_path = os.path.join(temp_dir, filename)
         
@@ -175,7 +387,6 @@ def serve_audio(filename):
                 download_name="translation.mp3"
             )
         else:
-            print(f"❌ Audio file not found: {file_path}")
             return jsonify({'error': 'Audio file not found'}), 404
             
     except Exception as e:
@@ -191,108 +402,49 @@ def get_languages():
         'count': len(INDIAN_LANGUAGES)
     })
 
-def create_template_if_missing():
-    """Create basic template if it doesn't exist"""
-    template_dir = os.path.join(os.path.dirname(__file__), 'templates')
-    os.makedirs(template_dir, exist_ok=True)
+def check_directories():
+    """Check and create necessary directories"""
+    print("\n📁 Checking directory structure...")
     
-    template_path = os.path.join(template_dir, 'index.html')
+    # List current directory
+    print("Current directory contents:")
+    for item in os.listdir('.'):
+        print(f"  - {item}")
     
-    if not os.path.exists(template_path):
-        print("📝 Creating basic template...")
-        basic_html = """<!DOCTYPE html>
-<html>
-<head>
-    <title>Indian Translator</title>
-    <style>
-        body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
-        textarea, select, button { width: 100%; padding: 10px; margin: 10px 0; }
-        .output { background: #f0f0f0; padding: 15px; margin: 20px 0; }
-    </style>
-</head>
-<body>
-    <h1>Indian Language Translator</h1>
-    <textarea id="text" rows="4">Hello, how are you?</textarea>
-    <select id="lang">
-        <option value="hi">Hindi</option>
-        <option value="bn">Bengali</option>
-        <option value="ta">Tamil</option>
-        <option value="te">Telugu</option>
-        <option value="en">English</option>
-    </select>
-    <button onclick="translate()">Translate</button>
-    <button onclick="speak()" id="speakBtn" disabled>Speak</button>
-    <div class="output" id="output"></div>
-    <audio id="audio" controls></audio>
+    # Create templates directory if it doesn't exist
+    templates_path = os.path.join(os.path.dirname(__file__), 'templates')
+    if not os.path.exists(templates_path):
+        print(f"📝 Creating templates directory: {templates_path}")
+        os.makedirs(templates_path, exist_ok=True)
+        
+        # Create basic template
+        template_file = os.path.join(templates_path, 'index.html')
+        with open(template_file, 'w') as f:
+            f.write("<!-- Template will be loaded from fallback -->")
+        print(f"📄 Created template file: {template_file}")
     
-    <script>
-        async function translate() {
-            const text = document.getElementById('text').value;
-            const lang = document.getElementById('lang').value;
-            
-            const res = await fetch('/translate', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({text: text, target_lang: lang})
-            });
-            
-            const data = await res.json();
-            if (data.success) {
-                document.getElementById('output').innerHTML = data.translated_text;
-                document.getElementById('speakBtn').disabled = false;
-            }
-        }
-        
-        async function speak() {
-            const text = document.getElementById('output').innerText;
-            const lang = document.getElementById('lang').value;
-            
-            const res = await fetch('/tts', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({text: text, lang: lang})
-            });
-            
-            const data = await res.json();
-            if (data.success) {
-                document.getElementById('audio').src = data.audio_url;
-                document.getElementById('audio').play();
-            }
-        }
-    </script>
-</body>
-</html>"""
-        
-        with open(template_path, 'w', encoding='utf-8') as f:
-            f.write(basic_html)
-        
-        print(f"✅ Template created at: {template_path}")
+    # Create static directory if it doesn't exist
+    static_path = os.path.join(os.path.dirname(__file__), 'static')
+    if not os.path.exists(static_path):
+        print(f"🎨 Creating static directory: {static_path}")
+        os.makedirs(static_path, exist_ok=True)
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("INDIAN LANGUAGE TRANSLATOR")
+    print("🚀 INDIAN LANGUAGE TRANSLATOR")
     print("=" * 60)
-    print(f"Port: {PORT}")
-    print(f"Python: {sys.version}")
-    print(f"Working Directory: {os.getcwd()}")
-    print(f"File Location: {__file__}")
+    print(f"📡 Port: {PORT}")
+    print(f"🐍 Python: {python_version.major}.{python_version.minor}.{python_version.micro}")
+    print(f"📁 Working dir: {os.getcwd()}")
+    print(f"📄 App file: {__file__}")
     print("=" * 60)
     
-    # Create template if missing
-    create_template_if_missing()
+    # Check directories
+    check_directories()
     
-    # List files in current directory
-    print("📁 Files in current directory:")
-    for root, dirs, files in os.walk('.'):
-        level = root.replace('.', '').count(os.sep)
-        indent = ' ' * 2 * level
-        print(f"{indent}{os.path.basename(root)}/")
-        subindent = ' ' * 2 * (level + 1)
-        for file in files:
-            print(f"{subindent}{file}")
-    
+    print("✅ Starting Flask server...")
+    print(f"🌐 Access at: http://localhost:{PORT}")
     print("=" * 60)
-    print("🚀 Starting Flask server...")
     
     # Run the app
     app.run(
